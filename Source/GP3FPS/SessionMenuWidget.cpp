@@ -35,3 +35,14 @@ bool USessionMenuWidget::CreateRoom(FString RoomName)
     return Sub && Sub->CreateSession(RoomName, 3);
 }
 
+
+void USessionMenuWidget::SearchRooms()
+{
+    if(auto* GI = GetGameInstance())
+    {
+        if(auto* Sub = GI->GetSubsystem<USessionSubsystem>())
+        {
+            Sub->FindSessions();
+        }
+    }
+}
