@@ -13,7 +13,15 @@ UCLASS()
 class GP3FPS_API ASessionGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
-	
+
+	static constexpr int MaxPlayers = 2;
+
+	// コンストラクタ
+	ASessionGameMode();
+
 protected:
 	virtual void BeginPlay() override;
+	virtual void PostLogin(APlayerController* NewPlayer) override;
+
+	void TryStartIfReady();
 };
