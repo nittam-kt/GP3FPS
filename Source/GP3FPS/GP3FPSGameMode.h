@@ -13,6 +13,13 @@ class AGP3FPSGameMode : public AGameModeBase
 
 public:
 	AGP3FPSGameMode();
+
+protected:
+    virtual void HandleStartingNewPlayer_Implementation(
+        APlayerController* NewPlayer) override;
+
+    virtual AActor* FindPlayerStart_Implementation(
+        AController* Player, const FString& IncomingName) override;
 };
 
 

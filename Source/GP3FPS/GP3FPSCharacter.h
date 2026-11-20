@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -13,6 +13,7 @@ class UCameraComponent;
 class UInputAction;
 class UInputMappingContext;
 struct FInputActionValue;
+class UGP3FPSWeaponComponent;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
@@ -48,6 +49,13 @@ class AGP3FPSCharacter : public ACharacter
 public:
 	AGP3FPSCharacter();
 
+	// レプリケート関数
+	virtual void GetLifetimeReplicatedProps(
+		TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	// 武器を持たせる
+	bool TryClaimWeapon(UGP3FPSWeaponComponent* Weapon);
+
 protected:
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
@@ -67,5 +75,11 @@ public:
 	/** Returns FirstPersonCameraComponent subobject **/
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
 
+private:
+	UPROPERTY(ReplicatedUsing = OnRep_CurrentWeapon)
+	UGP3FPSWeaponComponent* CurrentWeapon = nullptr;
+
+	UFUNCTION()
+	void OnRep_CurrentWeapon();
 };
 

@@ -12,7 +12,7 @@ bool USessionMenuWidget::CreateRoom(FString RoomName)
 {
     RoomName.TrimStartAndEndInline();
 
-    if(RoomName.IsEmpty() || !GetGameInstance())
+    if(!GetGameInstance())
     {
         return false;
     }
@@ -31,8 +31,18 @@ bool USessionMenuWidget::CreateRoom(FString RoomName)
     auto* Sub =
         GetGameInstance()->GetSubsystem<USessionSubsystem>();
 
-    // 作成要求が受け付けられたとき true
-    return Sub && Sub->CreateSession(RoomName, 3);
+    if(!Sub) return false;
+
+    // 自分の部屋があれば、名前を入力せずに再開できる。
+    if(Sub->HasHostedSession())
+    {
+        return Sub->ResumeHosting();
+    }
+
+    // 新しく作る場合だけ、部屋名が必要。
+    if(RoomName.IsEmpty()) return false;
+
+    return Sub->CreateSession(RoomName, 3);
 }
 
 

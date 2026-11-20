@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "GP3FPSCharacter.h"
 #include "GP3FPSProjectile.h"
@@ -10,6 +10,9 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "Engine/LocalPlayer.h"
+#include "Net/UnrealNetwork.h"
+#include "GP3FPSWeaponComponent.h"
+#include "GP3FPSPickUpComponent.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -98,5 +101,60 @@ void AGP3FPSCharacter::Look(const FInputActionValue& Value)
 		// add yaw and pitch input to controller
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
+	}
+}
+
+
+void AGP3FPSCharacter::GetLifetimeReplicatedProps(
+	TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AGP3FPSCharacter, CurrentWeapon);
+}
+
+
+bool AGP3FPSCharacter::TryClaimWeapon(UGP3FPSWeaponComponent* Weapon)
+{
+	if(!HasAuthority() || !IsValid(Weapon) || IsValid(CurrentWeapon))
+	{
+		return false;
+	}
+
+	AActor* PickupActor = Weapon->GetOwner();
+
+	// すでに誰かが取得した武器なら拒否する。
+	if(Cast<AGP3FPSCharacter>(PickupActor->GetOwner()))
+	{
+		return false;
+	}
+
+	PickupActor->SetOwner(this);
+	CurrentWeapon = Weapon;
+
+	// サーバー自身でも装備する。
+	OnRep_CurrentWeapon();
+	return true;
+}
+
+
+void AGP3FPSCharacter::OnRep_CurrentWeapon()
+{
+	if(!IsValid(CurrentWeapon))
+	{
+		return;
+	}
+
+	AActor* PickupActor = CurrentWeapon->GetOwner();
+	PickupActor->SetOwner(this);
+	PickupActor->SetActorEnableCollision(false);
+
+	auto* Pickup =
+		PickupActor->FindComponentByClass<UGP3FPSPickUpComponent>();
+
+	if(Pickup)
+	{
+		// 既存のBlueprintの装備・アニメーション設定を実行する。
+		Pickup->OnPickUp.Broadcast(this);
 	}
 }
